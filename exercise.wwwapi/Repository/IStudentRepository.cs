@@ -11,9 +11,9 @@ namespace exercise.wwwapi.Repository {
         public List<Student> GetAllStudents();
         public Student AddStudent(string FirstName, string LastName);
 
-        public Student? GetStudent(string FirstName);
+        public Student? GetStudent(string id);
 
-        public Student? DeleteStudent(string FirstName);
-        public Student? UpdateStudent(string FirstName, StudentUpdatePayload updatePayload);
+        public Task DeleteStudent(string id);
+        public Task<Student>? UpdateStudent(string FirstName, StudentUpdatePayload updatePayload);
     }
 }

@@ -8,37 +8,41 @@ namespace exercise.wwwapi.Repository {
 
     public class LanguageRepository : ILanguageRepository
     {
-        private LanguageCollection _languages;
+        private readonly LanguageDb _languages;
 
-        public LanguageRepository(LanguageCollection languages) {
+        public LanguageRepository(LanguageDb languages) {
             _languages = languages;
         }
 
         public Language AddLanguage(string Name)
         {
             Language language = new Language(Name);
-            _languages.Add(language);
+            _languages.Languages.Add(language);
+            _languages.SaveChanges();
             return language;
         }
 
         public Language DeleteLanguage(string Name)
         {
-            return _languages.Remove(Name);
+            Language language = GetLanguage(Name);
+            _languages.Languages.Remove(language);
+            return language;
         }
 
         public List<Language> GetAllLanguages()
         {
-            return _languages.GetAll();
+            return _languages.Languages.ToList();
         }
 
         public Language GetLanguage(string Name)
         {
-            return _languages.Get(Name);
+             var stud = _languages.Languages.FirstOrDefault(s => s.Name == Name);
+             return stud;
         }
 
         public Language UpdateLanguage(string Name, LanguageUpdatePayload updateData)
         {
-            var language = _languages.Get(Name);
+            var language = GetLanguage(Name);
             if (language == null)
             {
                 return null;

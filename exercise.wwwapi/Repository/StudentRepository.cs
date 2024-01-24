@@ -2,65 +2,70 @@
 using exercise.wwwapi.Data;
 using exercise.wwwapi.Models;
 using exercise.wwwapi.Models.Payload;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace exercise.wwwapi.Repository {
 
     public class StudentRepository : IStudentRepository
     {
-        private StudentCollection _students;
-
-        public StudentRepository(StudentCollection students) {
-            _students = students;
-        }
-        
-        public Student AddStudent(string FirstName, string LastName)
+        private readonly StudentDb _dbContext;
+        public StudentRepository(StudentDb dbContext)
         {
-            return _students.Add(new Student(FirstName, LastName));
-        }
-
-        public Student DeleteStudent(string FirstName)
-        {
-            var student = _students.get(FirstName);
-            if(student == null)
-                return null;
-            _students.Remove(student);
-            return student;
+            _dbContext = dbContext;
         }
 
         public List<Student> GetAllStudents()
         {
-            return _students.Students;
+            return _dbContext.Students.ToList();
         }
 
-        public Student? GetStudent(string FirstName)
+        public Student AddStudent(string FirstName, string LastName)
         {
-            return _students.get(FirstName);
+            Student student = new Student(FirstName, LastName);
+            _dbContext.Students.Add(student);
+            _dbContext.SaveChanges();
+            return student;
         }
 
-        public Student UpdateStudent(string FirstName, StudentUpdatePayload updateData)
+        public Student GetStudent(string id)
         {
-            var student = _students.get(FirstName);
+            int studentId = ConvertStringToInt(id);
+            var stud = _dbContext.Students.FirstOrDefault(s => s.Id == studentId);
+            return stud;
+        }
+
+        private int ConvertStringToInt(string id) {
+            int i = 0;
+            bool s = int.TryParse(id, out i);
+            return i;
+        }
+
+        public async Task DeleteStudent(string id)
+        {
+            Student student = GetStudent(id);
+            if (student == null)
+            {
+                return;
+            }
+             _dbContext.Students.Remove(student);
+            await _dbContext.SaveChangesAsync();        
+        }
+
+        public async Task<Student?> UpdateStudent(string FirstName, StudentUpdatePayload updatePayload)
+{
+            Student student = await _dbContext.Students.FindAsync(FirstName);
             if (student == null)
             {
                 return null;
             }
 
-            bool hasUpdate = false;
+            _dbContext.Entry(student).State = EntityState.Added;
 
-            if(updateData.FirstName != null)
-            {
-                student.FirstName = (string)updateData.FirstName;
-                hasUpdate = true;
-            }
+            student.FirstName = updatePayload.FirstName;
+            student.LastName = updatePayload.LastName;
 
-            if(updateData.LastName != null)
-            {
-                student.LastName = (string)updateData.LastName;
-                hasUpdate = true;
-            }
-
-            if(!hasUpdate) throw new Exception("No update data provided");
+            await _dbContext.SaveChangesAsync();
 
             return student;
         }
